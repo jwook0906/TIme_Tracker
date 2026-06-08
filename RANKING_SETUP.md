@@ -151,6 +151,80 @@ grant execute on function public.admin_reset_all_rankings() to authenticated;
 
 설정이 끝나면 앱을 재시작한 뒤 본인 계정으로 게스트 로그인 → F12로 개발자 모드를 열면 "관리자: 전체 사용자 랭킹 초기화" 섹션이 나타납니다 (관리자로 지정된 계정에서만 보입니다).
 
+## 5. 랭킹 항목별 초기화 (선택)
+
+"오늘 / 이번 주 / 전체기간·순수작업시간 / 연속작업일수" 랭킹을 개별적으로 초기화하고 싶다면 아래 SQL을 추가로 실행합니다.
+
+> ⚠ 오늘 ⊂ 이번 주 ⊂ 전체기간 관계로 같은 `daily_totals` 데이터를 날짜 범위만 다르게 집계한 것이라, 완전히 독립적인 초기화는 불가능합니다. 더 넓은 범위를 초기화하면 그 안에 포함된 좁은 범위의 기록도 함께 삭제되는 계층적 동작입니다 (예: "전체기간 초기화" → 오늘·이번 주 데이터도 함께 삭제됨).
+
+```sql
+-- 오늘 랭킹 초기화 — 오늘 날짜의 daily_totals 기록만 삭제
+create or replace function public.admin_reset_ranking_today()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.profiles where user_id = auth.uid() and is_admin) then
+    raise exception 'forbidden';
+  end if;
+  delete from public.daily_totals where date = current_date;
+end;
+$$;
+grant execute on function public.admin_reset_ranking_today() to authenticated;
+
+-- 이번 주 랭킹 초기화 — 최근 7일(오늘 포함) daily_totals 기록 삭제
+create or replace function public.admin_reset_ranking_week()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.profiles where user_id = auth.uid() and is_admin) then
+    raise exception 'forbidden';
+  end if;
+  delete from public.daily_totals where date >= current_date - interval '6 days';
+end;
+$$;
+grant execute on function public.admin_reset_ranking_week() to authenticated;
+
+-- 전체기간/순수작업시간 랭킹 초기화 — daily_totals 전체 삭제 (스트릭은 별도이므로 건드리지 않음)
+create or replace function public.admin_reset_ranking_alltime()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.profiles where user_id = auth.uid() and is_admin) then
+    raise exception 'forbidden';
+  end if;
+  delete from public.daily_totals;
+end;
+$$;
+grant execute on function public.admin_reset_ranking_alltime() to authenticated;
+
+-- 연속작업일수 랭킹 초기화 — 전체 사용자의 streak만 0으로
+create or replace function public.admin_reset_ranking_streak()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.profiles where user_id = auth.uid() and is_admin) then
+    raise exception 'forbidden';
+  end if;
+  update public.profiles set current_streak = 0;
+end;
+$$;
+grant execute on function public.admin_reset_ranking_streak() to authenticated;
+```
+
+실행 후 앱을 재시작하면 개발자 모드의 "관리자: 랭킹 항목별 초기화" 섹션에서 각 항목을 개별적으로 초기화할 수 있습니다.
+
 ## 참고: 비용
 
 무료 티어 기준 50,000 MAU(월간 활성 사용자), 500MB DB, 5GB 대역폭/월이 제공됩니다. 개인 프로젝트가 공개로 풀려서 어느 정도 사용자가 늘어나도 한동안 비용이 들지 않으며, 이 한도를 초과할 정도로 커지면 그때 유료 플랜(Pro, 월 $25~)으로 전환을 고려하면 됩니다.

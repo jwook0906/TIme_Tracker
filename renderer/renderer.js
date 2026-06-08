@@ -129,7 +129,7 @@ const TRANSLATIONS = {
     detecting: '감지 중...',
     workingPrefix: '작업 중: ', idlePrefix: '딴짓 중: ', notWorkingPrefix: '비작업 중: ',
     miniDetecting: '감지 중...', miniIdlePrefix: '딴짓: ',
-    totalTime: '총 작업시간', awayTime: '비작업 시간', resetAll: '전체 초기화', miniBtn: '⊟ 미니',
+    totalTime: '총 작업시간', awayTime: '비작업 시간', focusEfficiency: '집중 효율', resetAll: '전체 초기화', miniBtn: '⊟ 미니',
     colName: '프로그램', colTime: '사용 시간', colActions: '작업',
     btnReset: '초기화', btnRemove: '제거',
     emptyLine1: '아직 추가된 프로그램이 없습니다.', emptyLine2: '아래 버튼으로 추가해보세요.',
@@ -168,6 +168,22 @@ const TRANSLATIONS = {
     devRankingResetAllNeedAdmin: '관리자 계정에서만 사용할 수 있습니다.',
     devRankingResetAllDone: '전체 사용자의 랭킹 기록이 초기화되었습니다.',
     devRankingResetAllFailed: '초기화에 실패했습니다. 관리자 권한을 확인해 주세요.',
+    devRankingResetCategoryTitle: '관리자: 랭킹 항목별 초기화',
+    devRankingResetCategoryDesc: '⚠ 선택한 항목에 해당하는 모든 사용자의 기록이 영구 삭제됩니다. 되돌릴 수 없으며, 항목 간에 포함 관계가 있어(오늘 ⊂ 이번 주 ⊂ 전체기간) 더 넓은 범위를 초기화하면 좁은 범위도 함께 비워집니다.',
+    devRankingResetTodayBtn: '오늘 랭킹 초기화',
+    devRankingResetWeekBtn: '이번 주 랭킹 초기화',
+    devRankingResetAlltimeBtn: '전체기간/순수작업시간 랭킹 초기화',
+    devRankingResetStreakBtn: '연속작업일수 랭킹 초기화',
+    devRankingResetCategoryConfirm: '정말로 이 항목에 해당하는 모든 사용자의 랭킹 기록을 영구 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+    devRankingResetCategoryDone: '해당 항목의 랭킹 기록이 초기화되었습니다.',
+    devRankingResetCategoryFailed: '초기화에 실패했습니다. 관리자 권한을 확인해 주세요.',
+    devGenDummyTitle: '랭킹 테스트 유저 생성',
+    devGenDummyDesc: '⚠ 입력한 수만큼 새 게스트 계정을 실제로 생성하고 무작위 닉네임 · 작업시간 기록을 채워 전체 랭킹에 등록합니다. (Supabase에 즉시 반영되며 되돌릴 수 없고, 익명 로그인 횟수 제한에도 포함됩니다)',
+    devGenDummyBtn: '테스트 유저 생성',
+    devGenDummyProgress: '생성 중... ({current}/{total})',
+    devGenDummyDone: '테스트 유저 {count}명을 생성했습니다.',
+    devGenDummyPartial: '{total}명 중 {created}명만 생성되었습니다. (나머지는 실패 — 잠시 후 다시 시도해 주세요)',
+    devGenDummyInvalidCount: '1~50 사이의 숫자를 입력해 주세요.',
     tabRanking: '랭킹',
     rankingGuestTitle: '게스트로 시작하기',
     rankingGuestDesc: '닉네임만 입력하면 이메일이나 비밀번호 없이 바로 익명 계정으로 랭킹에 참여할 수 있습니다.',
@@ -180,10 +196,13 @@ const TRANSLATIONS = {
     rankingNicknameTitle: '닉네임 설정',
     rankingNicknameDesc: '랭킹에 표시될 닉네임을 입력해주세요.',
     nicknamePlaceholder: '닉네임', nicknameSaveBtn: '저장',
-    logoutBtn: '로그아웃', rankingMyNicknamePrefix: '내 닉네임: ',
-    rankingPeriodToday: '오늘', rankingPeriodWeek: '이번 주', rankingPeriodAlltime: '전체 기간',
-    rankingPeriodPureTime: '순수 작업시간', rankingPeriodStreak: '연속 작업일수', rankingStreakUnit: '일',
+    logoutBtn: '로그아웃', rankingBoardTitle: '전체 랭킹',
+    rankingPeriodToday: '오늘', rankingPeriodWeek: '이번 주',
+    rankingLoading: '랭킹 불러오는 중...',
     rankingLoadError: '랭킹을 불러오지 못했습니다.', rankingEmpty: '아직 랭킹 데이터가 없습니다.',
+    rankingCardSubtitle: '전국 랭킹', rankingRankSuffix: '위', rankingMeSuffix: '(나)',
+    rankingMyRowLabel: '내 순위', rankingNoRank: '-',
+    rankingCardLabelToday: '오늘 작업시간', rankingCardLabelWeek: '이번 주 작업시간',
 };
 
 let currentTheme = localStorage.getItem('theme') || 'dark';
@@ -232,21 +251,24 @@ if (!CHART_RANGES.includes(chartRange)) chartRange = 30;
 // ─── 랭킹 화면 상태 ────────────────────────────────────────────────────
 let myProfile = null; // { nickname } | null — 로그인했지만 닉네임 미설정이면 null
 let guestLoginBusy = false;
-let rankingPeriod = 'today'; // 'today' | 'week' | 'alltime' | 'puretime' | 'streak'
+let rankingPeriod = 'today'; // 'today' | 'week'
 const RANKING_VIEWS = {
   today: 'ranking_today',
   week: 'ranking_week',
-  alltime: 'ranking_alltime',
-  puretime: 'ranking_alltime',
-  streak: 'ranking_streak',
 };
 const RANKING_METRIC = {
   today: { column: 'total_seconds', format: formatTime },
   week: { column: 'total_seconds', format: formatTime },
-  alltime: { column: 'total_seconds', format: formatTime },
-  puretime: { column: 'total_seconds', format: formatTime },
-  streak: { column: 'current_streak', format: v => `${v}${t('rankingStreakUnit')}` },
 };
+const RANKING_CARD_LABEL = {
+  today: 'rankingCardLabelToday',
+  week: 'rankingCardLabelWeek',
+};
+// 닉네임별 아바타·진행바 색상을 순서대로 순환시켜 시각적으로 구분되게 한다 (의미를 갖진 않음)
+const RANKING_COLORS = ['#fbbf24', '#a78bfa', '#60a5fa', '#34d399', '#f472b6', '#fb923c', '#22d3ee'];
+// 4위부터는 상위권과 시각적으로 구분되도록 아바타·진행바를 무채색으로 통일한다
+const RANKING_GRAY = '#6b7280';
+const RANKING_LIST_VISIBLE_COUNT = 10;
 
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -273,6 +295,16 @@ function updateTotalTime() {
 function updateAwayTime() {
   const el = document.getElementById('awayTime');
   if (el) el.textContent = formatTime(state.awaySeconds || 0);
+}
+
+function updateFocusEfficiency() {
+  const el = document.getElementById('focusEfficiency');
+  if (!el) return;
+  const total = state.selectedPrograms.reduce((sum, name) => sum + (state.times[name] || 0), 0);
+  const away = state.awaySeconds || 0;
+  const tracked = total + away;
+  const pct = tracked > 0 ? Math.round((total / tracked) * 100) : 100;
+  el.textContent = `${pct}%`;
 }
 
 function updateMiniView(activeProcess, isIdle) {
@@ -501,13 +533,13 @@ function switchTab(tabName) {
 }
 
 async function renderDevMode() {
-  // 관리자 전용 섹션은 myProfile.is_admin일 때만 노출한다 — 이게 사실상의 "관리자 전용 진입점"이다.
-  // 랭킹 탭을 아직 열지 않아 myProfile이 비어 있을 수 있으므로 여기서도 한 번 더 시도해 둔다.
-  if (auth.getSession() && !myProfile) {
-    try { myProfile = await fetchMyProfile(); } catch { /* 닉네임 미설정 — 비관리자로 취급 */ }
-  }
+  // 관리자 전용 섹션도 누구나 볼 수 있도록 노출한다 — 실제 권한 검증은 서버(SECURITY DEFINER RPC의
+  // is_admin 재검증)가 수행하므로, 비관리자가 눌러도 데이터는 안전하며 "관리자 계정에서만
+  // 사용할 수 있습니다" 메시지로 자연스럽게 안내된다.
   const adminSection = document.getElementById('devAdminResetSection');
-  if (adminSection) adminSection.classList.toggle('hidden', !(myProfile && myProfile.is_admin));
+  if (adminSection) adminSection.classList.remove('hidden');
+  const adminCategorySection = document.getElementById('devAdminCategoryResetSection');
+  if (adminCategorySection) adminCategorySection.classList.remove('hidden');
 
   const dateInput = document.getElementById('devDateInput');
   const currentDateEl = document.getElementById('devCurrentDate');
@@ -638,6 +670,94 @@ async function resetMyRankingData() {
   }
 }
 
+// daily_totals/profiles 모두 RLS상 "본인 행만 쓰기 가능"이고 profiles.user_id는 auth.users(id)를
+// 참조하는 FK라서, 더미 랭킹 유저는 서버에 가짜 행을 직접 꽂아 넣는 방법으로는 만들 수 없다 —
+// 실제로 새 익명 계정을 만들고 그 계정의 토큰으로 본인 행을 채우는 것이 유일한 방법이다.
+// 전역 session(현재 로그인된 계정)은 절대 건드리지 않도록 매 계정의 토큰을 직접 들고 다닌다.
+async function restRequestAs(token, path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error((data && data.message) || `HTTP ${res.status}`);
+  }
+  if (res.status === 204) return null;
+  return res.json().catch(() => null);
+}
+
+const DUMMY_NICKNAME_WORDS = [
+  '몰입러', '집중왕', '코딩요정', '부엉이', '올빼미', '다람쥐', '책벌레',
+  '야행성', '새벽별', '집중모드', '초집중', '마감직전', '루틴마스터',
+  '꾸준맨', '타이머지킴이', '워커홀릭', '딴짓금지', '오후의커피', '불꽃집중', '갓생러',
+];
+
+function randomDummyNickname() {
+  const word = DUMMY_NICKNAME_WORDS[Math.floor(Math.random() * DUMMY_NICKNAME_WORDS.length)];
+  return `${word}${Math.floor(Math.random() * 100000)}`;
+}
+
+function recentDateStrings(count) {
+  const dates = [];
+  const d = new Date();
+  for (let i = 0; i < count; i++) {
+    dates.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() - 1);
+  }
+  return dates;
+}
+
+// 개발자 모드용: 임의의 닉네임 · 작업시간 기록을 가진 더미 게스트 계정을 N개 생성해 랭킹에 등록한다.
+// 계정 하나당 회원가입 1회 + 닉네임 등록 + 최근 며칠치 daily_totals 기록을 새로 발급받은 토큰으로 직접 남긴다.
+async function generateDummyRankingUsers(count, onProgress) {
+  const recentDates = recentDateStrings(7);
+  let created = 0;
+  for (let i = 0; i < count; i++) {
+    if (onProgress) onProgress(i, count);
+    try {
+      const signup = await authRequest('/auth/v1/signup', { method: 'POST', body: JSON.stringify({}) });
+      const token = signup.access_token;
+      const userId = signup.user.id;
+
+      let nickname = randomDummyNickname();
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await restRequestAs(token, '/profiles', {
+            method: 'POST',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ user_id: userId, nickname }),
+          });
+          break;
+        } catch (err) {
+          if (attempt >= 4 || !(err.message || '').includes('profiles_nickname_key')) throw err;
+          nickname = randomDummyNickname();
+        }
+      }
+
+      const days = 1 + Math.floor(Math.random() * recentDates.length);
+      for (const date of recentDates.slice(0, days)) {
+        await restRequestAs(token, '/daily_totals', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ user_id: userId, date, total_seconds: 600 + Math.floor(Math.random() * 8 * 3600) }),
+        });
+      }
+      created++;
+    } catch {
+      // 한 명 실패해도(닉네임 충돌, 익명 로그인 횟수 제한 등) 멈추지 않고 나머지를 계속 진행한다
+    }
+  }
+  return created === count
+    ? t('devGenDummyDone').replace('{count}', String(created))
+    : t('devGenDummyPartial').replace('{created}', String(created)).replace('{total}', String(count));
+}
+
 // 관리자 전용: 전체 사용자의 랭킹 기록을 영구 삭제한다.
 // 클라이언트(게스트 계정)는 RLS상 본인 행만 건드릴 수 있으므로, 실제 작업은 SECURITY DEFINER로
 // 정의된 admin_reset_all_rankings() RPC가 수행한다 — 이 함수는 호출자가 profiles.is_admin인지
@@ -652,6 +772,30 @@ async function resetAllRankingData() {
     return t('devRankingResetAllDone');
   } catch {
     return t('devRankingResetAllFailed');
+  }
+}
+
+// 관리자 전용: 랭킹 항목(오늘/이번 주/전체기간·순수작업시간/연속작업일수)별 개별 초기화.
+// 오늘 ⊂ 이번 주 ⊂ 전체기간 관계로 daily_totals를 날짜 범위만 다르게 집계한 뷰들이라
+// 완전히 독립적인 초기화는 불가능하다 — 더 넓은 범위를 지우면 좁은 범위도 함께 비워지는
+// 계층적 동작으로 구현한다 (admin_reset_all_rankings와 동일하게 SECURITY DEFINER RPC가
+// is_admin을 서버에서 재검증하므로 비관리자가 호출해도 거부된다).
+const RANKING_RESET_RPC = {
+  today: 'admin_reset_ranking_today',
+  week: 'admin_reset_ranking_week',
+  alltime: 'admin_reset_ranking_alltime',
+  streak: 'admin_reset_ranking_streak',
+};
+
+async function resetRankingCategory(scope) {
+  const sess = auth.getSession();
+  if (!sess || !myProfile || !myProfile.is_admin) return t('devRankingResetAllNeedAdmin');
+  if (!window.confirm(t('devRankingResetCategoryConfirm'))) return '';
+  try {
+    await restRequest(`/rpc/${RANKING_RESET_RPC[scope]}`, { method: 'POST' });
+    return t('devRankingResetCategoryDone');
+  } catch {
+    return t('devRankingResetCategoryFailed');
   }
 }
 
@@ -757,22 +901,47 @@ function bindNicknameForm(container) {
   });
 }
 
-function renderLeaderboardShell() {
+function renderLeaderboardShell(streakCurrent, streakBest) {
   return `
-    <div class="stats-section">
+    <div class="stats-section ranking-summary-card">
+      <div class="ranking-summary-top">
+        <div class="ranking-rank-badge" id="rankingMyRankBadge">
+          <span class="ranking-rank-num">${t('rankingNoRank')}</span>
+        </div>
+        <div class="ranking-summary-info">
+          <span class="ranking-summary-nickname" title="${myProfile.nickname}">${myProfile.nickname}</span>
+          <span class="ranking-summary-sub">${t('rankingCardSubtitle')}</span>
+        </div>
+        <div class="ranking-summary-value">
+          <span class="ranking-summary-time" id="rankingMyValue">--:--:--</span>
+          <span class="ranking-summary-time-label" id="rankingMyValueLabel">${t(RANKING_CARD_LABEL[rankingPeriod])}</span>
+        </div>
+      </div>
+      <div class="ranking-stat-badges">
+        <div class="ranking-stat-badge">
+          <span class="ranking-stat-icon">🔥</span>
+          <span class="ranking-stat-value">${streakCurrent}</span>
+          <span class="ranking-stat-label">${t('streakLabel')}</span>
+        </div>
+        <div class="ranking-stat-badge">
+          <span class="ranking-stat-icon">🏆</span>
+          <span class="ranking-stat-value">${streakBest}</span>
+          <span class="ranking-stat-label">${t('bestLabel')}</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats-section ranking-board-card">
       <div class="ranking-top-row">
-        <span class="ranking-my-nickname">${t('rankingMyNicknamePrefix')}${myProfile.nickname}</span>
+        <span class="ranking-board-title">${t('rankingBoardTitle')}</span>
         <button id="rankingLogoutBtn" class="btn-secondary">${t('logoutBtn')}</button>
       </div>
       <p class="ranking-disclaimer">${t('rankingDisclaimer')}</p>
       <div class="ranking-period-tabs">
         <button class="ranking-period-btn" data-period="today">${t('rankingPeriodToday')}</button>
         <button class="ranking-period-btn" data-period="week">${t('rankingPeriodWeek')}</button>
-        <button class="ranking-period-btn" data-period="alltime">${t('rankingPeriodAlltime')}</button>
-        <button class="ranking-period-btn" data-period="puretime">${t('rankingPeriodPureTime')}</button>
-        <button class="ranking-period-btn" data-period="streak">${t('rankingPeriodStreak')}</button>
       </div>
       <div id="rankingList" class="ranking-list"></div>
+      <div id="rankingMyRow" class="ranking-my-row hidden"></div>
     </div>
   `;
 }
@@ -792,38 +961,82 @@ function bindLeaderboardShell(container) {
   });
 }
 
+// 내 순위 요약 카드(좌측 순위 배지 + 우측 기록값)를 현재 선택된 기간에 맞춰 갱신한다.
+// rank가 null이면 해당 기간에 내 기록이 없는 것 — "-"와 빈 값으로 표시한다.
+function updateMyRankSummary(rank, value) {
+  const badgeEl = document.getElementById('rankingMyRankBadge');
+  const valueEl = document.getElementById('rankingMyValue');
+  const labelEl = document.getElementById('rankingMyValueLabel');
+  if (!badgeEl || !valueEl || !labelEl) return;
+  if (rank == null) {
+    badgeEl.innerHTML = `<span class="ranking-rank-num">${t('rankingNoRank')}</span>`;
+    valueEl.textContent = '--:--:--';
+  } else {
+    badgeEl.innerHTML = `<span class="ranking-rank-num">${rank}</span><span class="ranking-rank-suffix">${t('rankingRankSuffix')}</span>`;
+    valueEl.textContent = RANKING_METRIC[rankingPeriod].format(value || 0);
+  }
+  labelEl.textContent = t(RANKING_CARD_LABEL[rankingPeriod]);
+}
+
 function renderLeaderboardRows(rows) {
   const listEl = document.getElementById('rankingList');
+  const myRowEl = document.getElementById('rankingMyRow');
   if (!listEl) return;
   if (!rows.length) {
     listEl.innerHTML = `<div class="stats-empty">${t('rankingEmpty')}</div>`;
+    if (myRowEl) myRowEl.classList.add('hidden');
+    updateMyRankSummary(null, null);
     return;
   }
   const sess = auth.getSession();
   const metric = RANKING_METRIC[rankingPeriod];
-  listEl.innerHTML = rows.map((row, idx) => {
+  const maxVal = Math.max(...rows.map(r => r[metric.column] || 0), 1);
+
+  const buildRow = (row, idx) => {
     const isMe = sess && row.user_id === sess.user.id;
+    const rank = idx + 1;
+    const pct = Math.max(Math.round(((row[metric.column] || 0) / maxVal) * 100), 2);
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+    const initial = (row.nickname || '?').trim().charAt(0).toUpperCase();
+    const color = rank <= 3 ? RANKING_COLORS[idx % RANKING_COLORS.length] : RANKING_GRAY;
     return `
       <div class="ranking-row ${isMe ? 'ranking-row-me' : ''}">
-        <span class="ranking-rank">#${idx + 1}</span>
-        <span class="ranking-nickname">${row.nickname}</span>
+        <span class="ranking-rank ${rank <= 3 ? 'ranking-rank-medal' : ''}">${medal}</span>
+        <span class="ranking-avatar" style="background:${color}">${initial}</span>
+        <span class="ranking-nickname">${row.nickname}${isMe ? ` <span class="ranking-me-tag">${t('rankingMeSuffix')}</span>` : ''}</span>
+        <div class="ranking-bar-track"><div class="ranking-bar-fill" style="width:${pct}%;background:${color}"></div></div>
         <span class="ranking-time">${metric.format(row[metric.column] || 0)}</span>
       </div>
     `;
-  }).join('');
+  };
+
+  listEl.innerHTML = rows.slice(0, RANKING_LIST_VISIBLE_COUNT).map(buildRow).join('');
+
+  const myIndex = sess ? rows.findIndex(r => r.user_id === sess.user.id) : -1;
+  if (myIndex >= 0) {
+    myRowEl.innerHTML = `<span class="ranking-my-row-label">${t('rankingMyRowLabel')}</span>${buildRow(rows[myIndex], myIndex)}`;
+    myRowEl.classList.remove('hidden');
+    updateMyRankSummary(myIndex + 1, rows[myIndex][metric.column]);
+  } else {
+    myRowEl.classList.add('hidden');
+    updateMyRankSummary(null, null);
+  }
 }
 
 async function loadLeaderboard(period) {
   rankingPeriod = period;
   const listEl = document.getElementById('rankingList');
+  const myRowEl = document.getElementById('rankingMyRow');
   if (!listEl) return;
-  listEl.innerHTML = `<div class="stats-empty">${t('loading')}</div>`;
+  listEl.innerHTML = `<div class="stats-empty">${t('rankingLoading')}</div>`;
+  if (myRowEl) myRowEl.classList.add('hidden');
   try {
     const column = RANKING_METRIC[period].column;
     const rows = await restRequest(`/${RANKING_VIEWS[period]}?select=nickname,${column},user_id&order=${column}.desc&limit=50`);
     renderLeaderboardRows(rows || []);
   } catch {
     listEl.innerHTML = `<div class="stats-empty">${t('rankingLoadError')}</div>`;
+    updateMyRankSummary(null, null);
   }
 }
 
@@ -857,7 +1070,14 @@ async function renderRanking() {
     return;
   }
 
-  container.innerHTML = renderLeaderboardShell();
+  let streakCurrent = 0, streakBest = 0;
+  try {
+    const calc = calculateStreak(await api.getHistory());
+    streakCurrent = calc.current;
+    streakBest = calc.best;
+  } catch { /* 계산 실패 시 0으로 표시 */ }
+
+  container.innerHTML = renderLeaderboardShell(streakCurrent, streakBest);
   bindLeaderboardShell(container);
   await loadLeaderboard(rankingPeriod);
   syncFinalizedDays();
@@ -1163,6 +1383,7 @@ async function init() {
   updateFooter();
   updateTotalTime();
   updateAwayTime();
+  updateFocusEfficiency();
 
   const idleSelect = document.getElementById('idleSelect');
   idleSelect.value = String(state.idleThreshold || 30);
@@ -1185,6 +1406,7 @@ async function init() {
     updateStatus(activeProcess, isIdle);
     updateTotalTime();
     updateAwayTime();
+    updateFocusEfficiency();
     updateMiniView(activeProcess, isIdle);
     updateProgramBars();
     reorderProgramRows();
@@ -1249,6 +1471,23 @@ async function init() {
     btn.disabled = false;
   });
 
+  document.getElementById('devGenDummyBtn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('devGenDummyStatus');
+    const btn = document.getElementById('devGenDummyBtn');
+    const input = document.getElementById('devGenDummyCountInput');
+    const count = parseInt(input.value, 10);
+    if (!Number.isInteger(count) || count < 1 || count > 50) {
+      statusEl.textContent = t('devGenDummyInvalidCount');
+      return;
+    }
+    btn.disabled = true;
+    statusEl.textContent = t('devGenDummyProgress').replace('{current}', '0').replace('{total}', String(count));
+    statusEl.textContent = await generateDummyRankingUsers(count, (i, total) => {
+      statusEl.textContent = t('devGenDummyProgress').replace('{current}', String(i + 1)).replace('{total}', String(total));
+    });
+    btn.disabled = false;
+  });
+
   document.getElementById('devRankingResetAllBtn').addEventListener('click', async () => {
     const statusEl = document.getElementById('devRankingResetAllStatus');
     const btn = document.getElementById('devRankingResetAllBtn');
@@ -1256,6 +1495,22 @@ async function init() {
     const msg = await resetAllRankingData();
     if (msg) statusEl.textContent = msg;
     btn.disabled = false;
+  });
+
+  [
+    ['today', 'devRankingResetTodayBtn', 'devRankingResetTodayStatus'],
+    ['week', 'devRankingResetWeekBtn', 'devRankingResetWeekStatus'],
+    ['alltime', 'devRankingResetAlltimeBtn', 'devRankingResetAlltimeStatus'],
+    ['streak', 'devRankingResetStreakBtn', 'devRankingResetStreakStatus'],
+  ].forEach(([scope, btnId, statusId]) => {
+    document.getElementById(btnId).addEventListener('click', async () => {
+      const statusEl = document.getElementById(statusId);
+      const btn = document.getElementById(btnId);
+      btn.disabled = true;
+      const msg = await resetRankingCategory(scope);
+      if (msg) statusEl.textContent = msg;
+      btn.disabled = false;
+    });
   });
 
   document.getElementById('miniBtn').addEventListener('click', toggleMini);
@@ -1273,6 +1528,7 @@ async function init() {
     renderPrograms();
     updateTotalTime();
     updateAwayTime();
+    updateFocusEfficiency();
   });
 
   idleSelect.addEventListener('change', async () => {

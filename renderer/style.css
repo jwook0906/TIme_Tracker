@@ -125,6 +125,30 @@ h1 {
   letter-spacing: 0.5px;
 }
 
+.focus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid #1e1e2a;
+}
+
+.focus-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #55556a;
+}
+
+.focus-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #c8d8ff;
+  letter-spacing: 0.5px;
+}
+
 .total-label {
   font-size: 13px;
   font-weight: 600;
@@ -700,6 +724,24 @@ footer {
 #tab-stats::-webkit-scrollbar-track { background: transparent; }
 #tab-stats::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
 
+/* Dev mode tab panel — 섹션이 많아 화면을 넘치므로 휠 스크롤 가능하게 */
+#tab-devmode {
+  overflow-y: auto;
+  gap: 10px;
+}
+#tab-devmode::-webkit-scrollbar { width: 4px; }
+#tab-devmode::-webkit-scrollbar-track { background: transparent; }
+#tab-devmode::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
+
+/* 랭킹 탭 — 요약 카드 + 보드가 화면을 넘치므로 패널 자체를 휠 스크롤 가능하게 */
+#tab-ranking {
+  overflow-y: auto;
+  gap: 10px;
+}
+#tab-ranking::-webkit-scrollbar { width: 4px; }
+#tab-ranking::-webkit-scrollbar-track { background: transparent; }
+#tab-ranking::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
+
 /* Stats sections */
 .stats-section {
   background: #13131c;
@@ -922,7 +964,40 @@ footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 4px;
 }
-.ranking-my-nickname { font-size: 14px; color: #c8c8d8; font-weight: 600; }
+.ranking-board-title { font-size: 14px; color: #c8c8d8; font-weight: 600; }
+
+/* 내 순위 요약 카드 */
+.ranking-summary-card { display: flex; flex-direction: column; gap: 14px; }
+.ranking-summary-top { display: flex; align-items: center; gap: 14px; }
+.ranking-rank-badge {
+  display: flex; align-items: baseline; justify-content: center; gap: 2px;
+  min-width: 54px; padding: 10px 8px;
+  background: #0d1a0e; border: 1px solid #1f3a22; border-radius: 12px;
+}
+.ranking-rank-num { font-size: 22px; font-weight: 700; color: #4ade80; line-height: 1; font-variant-numeric: tabular-nums; }
+.ranking-rank-suffix { font-size: 12px; color: #4ade80; }
+.ranking-summary-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ranking-summary-nickname {
+  font-size: 16px; font-weight: 700; color: #e4e4f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ranking-summary-sub { font-size: 12px; color: #66667e; }
+.ranking-summary-value { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.ranking-summary-time {
+  font-size: 20px; font-weight: 700; color: #c8d8ff;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.4px;
+}
+.ranking-summary-time-label { font-size: 11px; color: #66667e; }
+
+.ranking-stat-badges { display: flex; gap: 10px; }
+.ranking-stat-badge {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: #0f0f13; border: 1px solid #1e1e2a; border-radius: 10px;
+  padding: 10px 14px;
+}
+.ranking-stat-icon { font-size: 17px; line-height: 1; }
+.ranking-stat-value { font-size: 16px; font-weight: 700; color: #e4e4f0; font-variant-numeric: tabular-nums; }
+.ranking-stat-label { font-size: 11px; color: #66667e; }
 
 .ranking-period-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
 .ranking-period-btn {
@@ -935,16 +1010,33 @@ footer {
 
 .ranking-list { display: flex; flex-direction: column; gap: 6px; }
 .ranking-row {
-  display: grid; grid-template-columns: 50px 1fr 100px;
+  display: grid; grid-template-columns: 34px 28px 116px 1fr 92px;
   align-items: center; gap: 10px;
   background: #0f0f13; border: 1px solid #1e1e2a; border-radius: 8px;
-  padding: 10px 14px; font-size: 13px;
+  padding: 9px 14px; font-size: 13px;
 }
 .ranking-row-me { border-color: #4ade80; background: #0d1a0e; }
-.ranking-rank { color: #55556a; font-weight: 600; }
+.ranking-rank { color: #55556a; font-weight: 600; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+.ranking-rank-medal { font-size: 16px; }
 .ranking-row-me .ranking-rank { color: #4ade80; }
-.ranking-nickname { color: #c8c8d8; }
+.ranking-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #15151f;
+}
+.ranking-nickname { color: #c8c8d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ranking-row-me .ranking-nickname { color: #e4e4f0; font-weight: 600; }
+.ranking-me-tag { font-size: 11px; color: #4ade80; font-weight: 600; }
+.ranking-bar-track { background: #1a1a26; border-radius: 4px; height: 6px; overflow: hidden; }
+.ranking-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; min-width: 3px; }
 .ranking-time { color: #9999bb; text-align: right; font-variant-numeric: tabular-nums; }
+
+.ranking-my-row { margin-top: 4px; padding-top: 12px; border-top: 1px dashed #25253a; }
+.ranking-my-row.hidden { display: none; }
+.ranking-my-row-label {
+  display: block; font-size: 11px; font-weight: 600; color: #4ade80;
+  letter-spacing: 0.3px; margin-bottom: 6px;
+}
 
 /* ============================================================ */
 /* Light Theme                                                    */
@@ -976,6 +1068,9 @@ footer {
 [data-theme="light"] .away-row { border-top-color: #e4e4f0; }
 [data-theme="light"] .away-label { color: #9999bb; }
 [data-theme="light"] .away-value { color: #2255cc; }
+[data-theme="light"] .focus-row { border-top-color: #e4e4f0; }
+[data-theme="light"] .focus-label { color: #9999bb; }
+[data-theme="light"] .focus-value { color: #2255cc; }
 [data-theme="light"] .btn-reset-all { background: #f0f0f8; border-color: #d0d0e8; color: #6666aa; }
 [data-theme="light"] .btn-reset-all:hover { background: #e0e0f4; color: #4444aa; }
 
@@ -1079,14 +1174,34 @@ footer {
 
 /* 랭킹 - light */
 [data-theme="light"] .ranking-disclaimer { color: #8888bb; }
-[data-theme="light"] .ranking-my-nickname { color: #33334d; }
+[data-theme="light"] .ranking-board-title { color: #33334d; }
 [data-theme="light"] .msg-info { color: #16a34a; background: #f0fff4; border-color: #bbf0cc; }
+
+[data-theme="light"] .ranking-rank-badge { background: #f0fff4; border-color: #bbf0cc; }
+[data-theme="light"] .ranking-rank-num { color: #16a34a; }
+[data-theme="light"] .ranking-rank-suffix { color: #16a34a; }
+[data-theme="light"] .ranking-summary-nickname { color: #2a2a3a; }
+[data-theme="light"] .ranking-summary-sub { color: #8888aa; }
+[data-theme="light"] .ranking-summary-time { color: #3355cc; }
+[data-theme="light"] .ranking-summary-time-label { color: #8888aa; }
+[data-theme="light"] .ranking-stat-badge { background: #fafaff; border-color: #e0e0f0; }
+[data-theme="light"] .ranking-stat-value { color: #2a2a3a; }
+[data-theme="light"] .ranking-stat-label { color: #8888aa; }
+
 [data-theme="light"] .ranking-period-btn { background: #f0f2f7; border-color: #d8d8ee; color: #7777aa; }
 [data-theme="light"] .ranking-period-btn:hover { border-color: #b0b0d8; color: #444466; }
 [data-theme="light"] .ranking-period-btn.active { background: #f0fff4; border-color: #22c55e; color: #16a34a; }
+[data-theme="light"] .ranking-bar-track { background: #ececf5; }
+[data-theme="light"] .ranking-list::-webkit-scrollbar-track { background: #ececf5; }
+[data-theme="light"] .ranking-list::-webkit-scrollbar-thumb { background: #d8d8ee; }
+[data-theme="light"] .ranking-list::-webkit-scrollbar-thumb:hover { background: #b0b0d8; }
 [data-theme="light"] .ranking-row { background: #fafaff; border-color: #e0e0f0; }
 [data-theme="light"] .ranking-row-me { background: #f0fff4; border-color: #22c55e; }
 [data-theme="light"] .ranking-rank { color: #9999bb; }
 [data-theme="light"] .ranking-row-me .ranking-rank { color: #16a34a; }
+[data-theme="light"] .ranking-avatar { color: #ffffff; }
 [data-theme="light"] .ranking-nickname { color: #33334d; }
+[data-theme="light"] .ranking-me-tag { color: #16a34a; }
 [data-theme="light"] .ranking-time { color: #7777aa; }
+[data-theme="light"] .ranking-my-row { border-top-color: #d8d8ee; }
+[data-theme="light"] .ranking-my-row-label { color: #16a34a; }

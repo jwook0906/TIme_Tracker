@@ -59,6 +59,10 @@
           <span class="away-label" data-i18n="awayTime">비작업 시간</span>
           <span class="away-value" id="awayTime">00:00:00</span>
         </div>
+        <div class="focus-row">
+          <span class="focus-label" data-i18n="focusEfficiency">집중 효율</span>
+          <span class="focus-value" id="focusEfficiency">100%</span>
+        </div>
       </div>
 
       <main>
@@ -180,12 +184,41 @@
           <button id="devRankingResetBtn" class="btn-secondary" data-i18n="devRankingResetBtn">내 랭킹 기록 초기화</button>
         </div>
       </div>
-      <div id="devAdminResetSection" class="stats-section hidden">
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="devGenDummyTitle">랭킹 테스트 유저 생성</h3>
+        <p class="dev-warning" data-i18n="devGenDummyDesc">⚠ 입력한 수만큼 새 게스트 계정을 실제로 생성하고 무작위 닉네임 · 작업시간 기록을 채워 전체 랭킹에 등록합니다. (Supabase에 즉시 반영되며 되돌릴 수 없고, 익명 로그인 횟수 제한에도 포함됩니다)</p>
+        <div class="update-row">
+          <span id="devGenDummyStatus" class="update-status"></span>
+          <input type="number" id="devGenDummyCountInput" class="dev-time-input" min="1" max="50" value="5" />
+          <button id="devGenDummyBtn" class="btn-secondary" data-i18n="devGenDummyBtn">테스트 유저 생성</button>
+        </div>
+      </div>
+      <div id="devAdminResetSection" class="stats-section">
         <h3 class="stats-title" data-i18n="devRankingResetAllTitle">관리자: 전체 사용자 랭킹 초기화</h3>
         <p class="dev-warning" data-i18n="devRankingResetAllDesc">⚠ 모든 사용자의 누적 기록과 연속 작업일수가 영구 삭제됩니다. 되돌릴 수 없으며, 관리자 계정에서만 동작합니다.</p>
         <div class="update-row">
           <span id="devRankingResetAllStatus" class="update-status"></span>
           <button id="devRankingResetAllBtn" class="btn-secondary" data-i18n="devRankingResetAllBtn">전체 사용자 랭킹 초기화</button>
+        </div>
+      </div>
+      <div id="devAdminCategoryResetSection" class="stats-section">
+        <h3 class="stats-title" data-i18n="devRankingResetCategoryTitle">관리자: 랭킹 항목별 초기화</h3>
+        <p class="dev-warning" data-i18n="devRankingResetCategoryDesc">⚠ 선택한 항목에 해당하는 모든 사용자의 기록이 영구 삭제됩니다. 되돌릴 수 없으며, 항목 간에 포함 관계가 있어(오늘 ⊂ 이번 주 ⊂ 전체기간) 더 넓은 범위를 초기화하면 좁은 범위도 함께 비워집니다.</p>
+        <div class="update-row">
+          <span id="devRankingResetTodayStatus" class="update-status"></span>
+          <button id="devRankingResetTodayBtn" class="btn-secondary" data-i18n="devRankingResetTodayBtn">오늘 랭킹 초기화</button>
+        </div>
+        <div class="update-row">
+          <span id="devRankingResetWeekStatus" class="update-status"></span>
+          <button id="devRankingResetWeekBtn" class="btn-secondary" data-i18n="devRankingResetWeekBtn">이번 주 랭킹 초기화</button>
+        </div>
+        <div class="update-row">
+          <span id="devRankingResetAlltimeStatus" class="update-status"></span>
+          <button id="devRankingResetAlltimeBtn" class="btn-secondary" data-i18n="devRankingResetAlltimeBtn">전체기간/순수작업시간 랭킹 초기화</button>
+        </div>
+        <div class="update-row">
+          <span id="devRankingResetStreakStatus" class="update-status"></span>
+          <button id="devRankingResetStreakBtn" class="btn-secondary" data-i18n="devRankingResetStreakBtn">연속작업일수 랭킹 초기화</button>
         </div>
       </div>
     </div>
