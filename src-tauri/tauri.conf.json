@@ -35,7 +35,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/<GITHUB_USER>/<GITHUB_REPO>/releases/latest/download/latest.json"
+        "https://github.com/jwook0906/TIme_Tracker/releases/latest/download/latest.json"
       ],
       "pubkey": "<TAURI_UPDATER_PUBKEY>"
     }

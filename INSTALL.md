@@ -20,4 +20,4 @@
 
 ## 설치 파일
 
-GitHub Releases 페이지(`https://github.com/<사용자명>/<저장소명>/releases`, 저장소 생성 후 실제 주소로 교체)에서 최신 버전의 설치 파일(`.exe`, NSIS 인스톨러)을 내려받아 실행하세요. 앱은 실행 중 자동으로 새 버전을 확인하며, 새 버전이 있으면 알림을 통해 업데이트할 수 있습니다.
+GitHub Releases 페이지([releases](https://github.com/jwook0906/TIme_Tracker/releases))에서 최신 버전의 설치 파일(`.exe`, NSIS 인스톨러)을 내려받아 실행하세요. 앱은 실행 중 자동으로 새 버전을 확인하며, 새 버전이 있으면 알림을 통해 업데이트할 수 있습니다.
