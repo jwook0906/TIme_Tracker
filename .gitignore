@@ -1,0 +1,12 @@
+# Node
+node_modules/
+
+# Rust / Tauri build output (수 GB 단위라 반드시 제외)
+/src-tauri/target/
+
+# Tauri가 빌드 시 자동 생성하는 스키마 (재생성 가능)
+/src-tauri/gen/schemas/
+
+# OS
+Thumbs.db
+.DS_Store

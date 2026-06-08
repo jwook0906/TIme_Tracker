@@ -1,0 +1,48 @@
+name: Release
+
+# 'v1.2.0' 형식의 태그를 푸시하면 빌드, 업데이터 아티팩트 서명, GitHub Release 게시까지 자동 진행됩니다.
+# 사전에 다음 Repository Secrets가 등록되어 있어야 합니다:
+#   TAURI_SIGNING_PRIVATE_KEY          (tauri signer generate로 생성한 개인키)
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD (개인키 생성 시 입력한 비밀번호)
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install frontend dependencies
+        run: npm install
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'WorkTimeTracker ${{ github.ref_name }}'
+          releaseBody: |
+            ## 변경 사항
+            (이 릴리즈의 변경 사항을 입력하세요)
+
+            ## 설치 시 "Windows에서 PC를 보호했습니다" 경고가 나타나는 경우
+            이 앱은 아직 코드 서명 인증서를 적용하지 않은 소규모 개인 프로젝트라 SmartScreen 경고가 표시될 수 있습니다.
+            바이러스가 아니니 안심하시고, 경고 창에서 **"추가 정보" → "실행"**을 선택해 설치를 진행해 주세요.
+            자세한 내용은 [INSTALL.md](https://github.com/${{ github.repository }}/blob/main/INSTALL.md)를 참고하세요.
+          releaseDraft: true
+          prerelease: false

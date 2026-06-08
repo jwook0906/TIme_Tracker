@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>작업시간 측정기</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 미니 뷰 (항상 위에 오버레이) -->
+  <div id="miniView" class="mini-view hidden">
+    <div class="mini-drag">
+      <span class="mini-title" data-i18n="miniTitle">⏱ 작업시간 측정기</span>
+      <button id="expandBtn" class="btn-expand" title="전체 화면으로">⤢</button>
+    </div>
+    <div class="mini-active-row">
+      <span class="mini-dot" id="miniDot"></span>
+      <span id="miniProcess" class="mini-process">감지 중...</span>
+      <span id="miniProcTime" class="mini-proc-time">--:--:--</span>
+    </div>
+    <div class="mini-total-row">
+      <span class="mini-total-label" data-i18n="totalTime">총 작업시간</span>
+      <span id="miniTotalTime" class="mini-total-time">00:00:00</span>
+    </div>
+  </div>
+
+  <div class="app">
+    <header>
+      <h1><img src="icon.png" class="header-icon"> <span data-i18n="appName">작업시간 측정기</span></h1>
+      <div class="header-right">
+        <div class="active-status">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">감지 중...</span>
+        </div>
+        <button id="miniBtn" class="btn-mini" title="미니 모드로 전환" data-i18n="miniBtn">⊟ 미니</button>
+      </div>
+    </header>
+
+    <!-- 탭 네비게이션 -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="home" data-i18n="tabHome">홈</button>
+      <button class="tab-btn" data-tab="stats" data-i18n="tabStats">통계</button>
+      <button class="tab-btn" data-tab="ranking" data-i18n="tabRanking">랭킹</button>
+      <button class="tab-btn" data-tab="settings" data-i18n="tabSettings">설정</button>
+      <button class="tab-btn hidden" data-tab="devmode" id="devModeTabBtn" data-i18n="devModeTabLabel">개발자</button>
+    </div>
+
+    <!-- 홈 탭 -->
+    <div id="tab-home" class="tab-panel">
+      <div class="total-bar">
+        <div class="total-row">
+          <span class="total-label" data-i18n="totalTime">총 작업시간</span>
+          <div class="total-right">
+            <span class="total-value" id="totalTime">00:00:00</span>
+            <button id="resetAllBtn" class="btn-reset-all" data-i18n="resetAll">전체 초기화</button>
+          </div>
+        </div>
+        <div class="away-row">
+          <span class="away-label" data-i18n="awayTime">비작업 시간</span>
+          <span class="away-value" id="awayTime">00:00:00</span>
+        </div>
+      </div>
+
+      <main>
+        <div class="table-header">
+          <span class="col-name" data-i18n="colName">프로그램</span>
+          <span class="col-time" data-i18n="colTime">사용 시간</span>
+          <span class="col-bar"></span>
+          <span class="col-actions" data-i18n="colActions">작업</span>
+        </div>
+        <div id="programList" class="program-list">
+          <div class="empty-state">아직 추가된 프로그램이 없습니다.</div>
+        </div>
+      </main>
+
+      <footer>
+        <button id="addBtn" class="btn-add" data-i18n="addBtn">+ 프로그램 추가</button>
+        <div class="footer-right">
+          <div class="idle-row">
+            <label class="idle-label" data-i18n="idleLabel">딴짓 감지</label>
+            <select id="idleSelect" class="idle-select">
+              <option value="5">5초</option>
+              <option value="10">10초</option>
+              <option value="20">20초</option>
+              <option value="30">30초</option>
+              <option value="60">60초</option>
+            </select>
+            <span id="countLabel" class="count-label">0 / 10</span>
+          </div>
+          <p class="idle-desc" data-i18n="idleDesc">딴짓 감지 시간을 설정합니다.</p>
+          <span id="versionLabel" class="version-label"></span>
+        </div>
+      </footer>
+    </div>
+
+    <!-- 통계 탭 -->
+    <div id="tab-stats" class="tab-panel hidden">
+      <div class="stats-section streak-section">
+        <div class="streak-item">
+          <span class="streak-icon">🔥</span>
+          <span class="streak-count" id="streakCurrent">0</span>
+          <span class="streak-label" data-i18n="streakLabel">연속 집중일</span>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-item">
+          <span class="streak-icon">🏆</span>
+          <span class="streak-count" id="streakBest">0</span>
+          <span class="streak-label" data-i18n="bestLabel">최장 기록</span>
+        </div>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="todayChartTitle">오늘 프로그램별 사용 시간</h3>
+        <div id="todayChart" class="bar-chart">
+          <div class="stats-empty">추적 중인 프로그램이 없습니다.</div>
+        </div>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="weekChartTitle">총 작업시간 추이</h3>
+        <div class="chart-range-tabs">
+          <button class="chart-range-btn" data-range="7" data-i18n="chartRange7">7일</button>
+          <button class="chart-range-btn" data-range="14" data-i18n="chartRange14">14일</button>
+          <button class="chart-range-btn" data-range="30" data-i18n="chartRange30">30일</button>
+        </div>
+        <div id="weekChart"></div>
+      </div>
+    </div>
+
+    <!-- 설정 탭 -->
+    <div id="tab-settings" class="tab-panel hidden">
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="settingsTheme">테마</h3>
+        <div class="settings-option-group">
+          <button class="settings-option" data-theme-opt="dark">
+            🌙 <span data-i18n="dark">다크</span>
+          </button>
+          <button class="settings-option" data-theme-opt="light">
+            ☀️ <span data-i18n="light">라이트</span>
+          </button>
+        </div>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="settingsUpdate">업데이트</h3>
+        <div class="update-row">
+          <span id="updateStatus" class="update-status"></span>
+          <button id="checkUpdateBtn" class="btn-secondary" data-i18n="checkUpdateBtn">업데이트 확인</button>
+          <button id="installUpdateBtn" class="btn-primary hidden" data-i18n="installUpdateBtn">지금 설치</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 랭킹 탭 -->
+    <div id="tab-ranking" class="tab-panel hidden">
+      <div id="rankingContent"></div>
+    </div>
+
+    <!-- 개발자 모드 탭 (F12로 열고 닫기) -->
+    <div id="tab-devmode" class="tab-panel hidden">
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="devModeTitle">개발자 모드</h3>
+        <p class="dev-warning" data-i18n="devWarning">⚠ 아래 값을 변경하면 실제 작업 기록이 즉시 덮어써집니다.</p>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="devDateLabel">가상 날짜</h3>
+        <div class="update-row">
+          <span id="devCurrentDate" class="update-status"></span>
+          <input type="date" id="devDateInput" class="dev-date-input" />
+          <button id="devDateApplyBtn" class="btn-primary" data-i18n="devDateApplyBtn">적용</button>
+          <button id="devDateResetBtn" class="btn-secondary" data-i18n="devDateResetBtn">실제 날짜로 초기화</button>
+        </div>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="devTimeLabel">작업시간 조정 (HH:MM:SS)</h3>
+        <div id="devTimeList" class="dev-time-list"></div>
+      </div>
+      <div class="stats-section">
+        <h3 class="stats-title" data-i18n="devRankingResetTitle">랭킹 기록 초기화</h3>
+        <p class="dev-warning" data-i18n="devRankingResetDesc">⚠ 본인 계정의 랭킹 누적 기록과 연속 작업일수가 0으로 초기화됩니다. (Supabase에 즉시 반영되며 되돌릴 수 없습니다)</p>
+        <div class="update-row">
+          <span id="devRankingResetStatus" class="update-status"></span>
+          <button id="devRankingResetBtn" class="btn-secondary" data-i18n="devRankingResetBtn">내 랭킹 기록 초기화</button>
+        </div>
+      </div>
+      <div id="devAdminResetSection" class="stats-section hidden">
+        <h3 class="stats-title" data-i18n="devRankingResetAllTitle">관리자: 전체 사용자 랭킹 초기화</h3>
+        <p class="dev-warning" data-i18n="devRankingResetAllDesc">⚠ 모든 사용자의 누적 기록과 연속 작업일수가 영구 삭제됩니다. 되돌릴 수 없으며, 관리자 계정에서만 동작합니다.</p>
+        <div class="update-row">
+          <span id="devRankingResetAllStatus" class="update-status"></span>
+          <button id="devRankingResetAllBtn" class="btn-secondary" data-i18n="devRankingResetAllBtn">전체 사용자 랭킹 초기화</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 프로그램 추가 모달 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="modalTitle">프로그램 추가</h2>
+        <button id="modalClose" class="btn-close">✕</button>
+      </div>
+      <input id="searchInput" type="text" class="search-input" placeholder="프로세스 이름 검색 또는 직접 입력..." />
+      <div id="processList" class="process-list">
+        <div class="loading">실행 중인 프로세스 조회 중...</div>
+      </div>
+      <div id="modalError" class="modal-error hidden"></div>
+      <div class="modal-footer">
+        <button id="addCustomBtn" class="btn-primary" data-i18n="addConfirm">추가</button>
+        <button id="cancelBtn" class="btn-secondary" data-i18n="cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
