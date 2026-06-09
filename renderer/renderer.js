@@ -12,6 +12,7 @@ const api = {
   setIdleThreshold: (seconds) => invoke('set_idle_threshold', { seconds }),
   setMiniMode: (isMini) => invoke('set_mini_mode', { isMini }),
   getHistory: () => invoke('get_history'),
+  clearHistory: () => invoke('clear_history'),
   onTimerUpdate: (cb) => listen('timer-update', (e) => cb(e.payload)),
   devSetVirtualDate: (date) => invoke('dev_set_virtual_date', { date }),
   devSetTime: (name, seconds) => invoke('dev_set_time', { name, seconds }),
@@ -23,6 +24,7 @@ const SUPABASE_URL = 'https://xhvqehcwrywhazoozlsc.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhodnFlaGN3cnl3aGF6b296bHNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MjQ3NDgsImV4cCI6MjA5NjQwMDc0OH0.IWmsMKhFI1Sqq4VV4ee3y8edBMzngO-aSi0jD6yhYPk';
 const SESSION_STORAGE_KEY = 'tt_session';
 const RANKING_SYNC_STORAGE_KEY = 'tt_ranking_synced_until';
+const RANKING_LAST_SYNC_TIME_KEY = 'tt_ranking_last_sync_time';
 
 function isSupabaseConfigured() {
   return !SUPABASE_URL.startsWith('<') && !SUPABASE_ANON_KEY.startsWith('<');
@@ -203,6 +205,12 @@ const TRANSLATIONS = {
     rankingCardSubtitle: '전국 랭킹', rankingRankSuffix: '위', rankingMeSuffix: '(나)',
     rankingMyRowLabel: '내 순위', rankingNoRank: '-',
     rankingCardLabelToday: '오늘 작업시간', rankingCardLabelWeek: '이번 주 작업시간',
+    rankingSyncNext: '다음 동기화까지: {m}분',
+    rankingSyncSoon: '다음 동기화까지: 잠시 후',
+    rankingSyncUnknown: '다음 동기화까지: -',
+    clearHistoryBtn: '기록 초기화',
+    clearHistoryDesc: '⚠ 통계 탭의 총 작업시간 추이 기록이 모두 삭제됩니다. 되돌릴 수 없습니다.',
+    clearHistoryConfirm: '총 작업시간 추이 기록을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
 };
 
 let currentTheme = localStorage.getItem('theme') || 'dark';
@@ -647,6 +655,33 @@ async function syncFinalizedDays() {
   }
 }
 
+async function syncTodayData() {
+  const sess = auth.getSession();
+  if (!sess || !myProfile) return;
+  const currentState = await api.getState();
+  const total = Object.values(currentState.times).reduce((s, v) => s + v, 0);
+  try {
+    await restRequest('/daily_totals', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ user_id: sess.user.id, date: currentState.date, total_seconds: total }),
+    });
+  } catch { /* 실패 시 다음 주기에 재시도 */ }
+  localStorage.setItem(RANKING_LAST_SYNC_TIME_KEY, Date.now().toString());
+  updateRankingSyncCountdown();
+}
+
+function updateRankingSyncCountdown() {
+  const el = document.getElementById('rankingSyncCountdown');
+  if (!el) return;
+  const lastSync = Number(localStorage.getItem(RANKING_LAST_SYNC_TIME_KEY) || 0);
+  if (!lastSync) { el.textContent = t('rankingSyncUnknown'); return; }
+  const remaining = Math.max(0, lastSync + 30 * 60 * 1000 - Date.now());
+  if (remaining === 0) { el.textContent = t('rankingSyncSoon'); return; }
+  const m = Math.ceil(remaining / 60000);
+  el.textContent = t('rankingSyncNext').replace('{m}', m);
+}
+
 // 개발자 모드용: 본인 랭킹 기록을 0으로 되돌린다 (delete 권한이 없는 RLS 정책 그대로 두고 update만으로 처리).
 // RANKING_SYNC_STORAGE_KEY는 그대로 둬야 한다 — 지우면 다음 syncFinalizedDays 때 history에 남은
 // 예전 기록이 "미동기화"로 다시 인식되어 방금 0으로 되돌린 값을 덮어써 버린다.
@@ -936,6 +971,7 @@ function renderLeaderboardShell(streakCurrent, streakBest) {
         <button id="rankingLogoutBtn" class="btn-secondary">${t('logoutBtn')}</button>
       </div>
       <p class="ranking-disclaimer">${t('rankingDisclaimer')}</p>
+      <p class="ranking-sync-info" id="rankingSyncCountdown"></p>
       <div class="ranking-period-tabs">
         <button class="ranking-period-btn" data-period="today">${t('rankingPeriodToday')}</button>
         <button class="ranking-period-btn" data-period="week">${t('rankingPeriodWeek')}</button>
@@ -959,6 +995,7 @@ function bindLeaderboardShell(container) {
       loadLeaderboard(btn.dataset.period);
     });
   });
+  updateRankingSyncCountdown();
 }
 
 // 내 순위 요약 카드(좌측 순위 배지 + 우측 기록값)를 현재 선택된 기간에 맞춰 갱신한다.
@@ -1376,6 +1413,9 @@ async function init() {
   if (session) await auth.refreshSession();
   syncFinalizedDays();
   setInterval(syncFinalizedDays, 30 * 60 * 1000);
+  syncTodayData();
+  setInterval(syncTodayData, 30 * 60 * 1000);
+  setInterval(updateRankingSyncCountdown, 60 * 1000);
 
   state = await api.getState();
   renderPrograms();
@@ -1529,6 +1569,12 @@ async function init() {
     updateTotalTime();
     updateAwayTime();
     updateFocusEfficiency();
+  });
+
+  document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+    if (!confirm(t('clearHistoryConfirm'))) return;
+    await api.clearHistory();
+    await renderStats();
   });
 
   idleSelect.addEventListener('change', async () => {

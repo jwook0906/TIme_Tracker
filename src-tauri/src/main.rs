@@ -126,6 +126,7 @@ fn main() {
             commands::set_idle_threshold,
             commands::set_mini_mode,
             commands::get_history,
+            commands::clear_history,
             commands::dev_set_virtual_date,
             commands::dev_set_time,
         ])

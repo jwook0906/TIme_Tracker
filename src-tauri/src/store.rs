@@ -48,6 +48,10 @@ pub fn save_history(records: &[DailyRecord]) {
     }
 }
 
+pub fn clear_history() {
+    save_history(&[]);
+}
+
 pub fn rollover(state: &mut AppState, new_date: String) {
     let record = DailyRecord {
         date: state.date.clone(),

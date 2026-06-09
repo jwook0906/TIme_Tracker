@@ -92,6 +92,11 @@ pub fn get_history() -> Vec<DailyRecord> {
     store::load_history()
 }
 
+#[tauri::command]
+pub fn clear_history() {
+    store::clear_history();
+}
+
 
 #[tauri::command]
 pub fn set_mini_mode(is_mini: bool, app: AppHandle) -> Result<(), String> {
